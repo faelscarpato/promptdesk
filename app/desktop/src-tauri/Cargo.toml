@@ -1,0 +1,25 @@
+[package]
+name = "promptforge-pro"
+version = "0.1.0"
+description = "PromptForge Pro - Modular AI Prompt Generator"
+authors = ["PromptForge Team"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1.4", features = [] }
+
+[dependencies]
+tauri = { version = "1.4", features = [ "fs-all", "path-all", "protocol-asset", "shell-open", "storage"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1", features = ["full"] }
+pdf-extract = "0.7"
+docx-rs = "0.4"
+calamine = "0.22"
+regex = "1.10"
+
+[features]
+# this feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
