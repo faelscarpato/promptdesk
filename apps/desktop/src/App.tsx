@@ -7,6 +7,7 @@ import { LLMResult } from './pages/LLMResult';
 import { SettingsPage } from './pages/Settings';
 import { PromptHub } from './pages/PromptHub';
 import { Playground } from './pages/Playground';
+import { AgentGallery } from './pages/AgentGallery';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="/hub" element={<PromptHub />} />
             <Route path="/playground" element={<Playground />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/agents" element={<AgentGallery />} />
           </Routes>
         </main>
       </div>

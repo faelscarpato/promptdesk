@@ -5,9 +5,9 @@ import {
   FolderKanban, 
   Library, 
   PlayCircle, 
-  History, 
   Settings,
-  Zap
+  Zap,
+  Bot
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -18,8 +18,8 @@ export const Sidebar: React.FC = () => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
     { icon: FolderKanban, label: 'Projetos', path: '/projects' },
     { icon: Library, label: 'Prompt Hub', path: '/hub' },
+    { icon: Bot, label: 'Agentes', path: '/agents' },
     { icon: PlayCircle, label: 'Playground', path: '/playground' },
-    { icon: History, label: 'Histórico', path: '/history' },
     { icon: Settings, label: 'Configurações', path: '/settings' },
   ];
 
@@ -34,7 +34,8 @@ export const Sidebar: React.FC = () => {
 
       <nav className="flex-1 px-4 space-y-2 mt-4">
         {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname === item.path || 
+            (item.path === '/agents' && location.pathname.startsWith('/agents'));
           return (
             <button
               key={item.path}
