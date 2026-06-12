@@ -9,7 +9,7 @@ interface ModuleCardProps {
 
 export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onRemove }) => {
   return (
-    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden group">
+    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-none group">
       <div className="flex items-center p-4">
         <div className="cursor-grab text-slate-300 hover:text-slate-500 mr-3">
           <GripVertical size={20} />

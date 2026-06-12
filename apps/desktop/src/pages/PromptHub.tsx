@@ -48,7 +48,7 @@ export const PromptHub: React.FC = () => {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0, flexWrap: 'wrap' }}>
           <button onClick={() => setActivePrompt(null)} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-            \u2190 Voltar
+            Voltar
           </button>
           <h2 style={{ fontSize: 'clamp(16px, 3vw, 22px)', fontWeight: 900, color: '#fff', flex: 1 }}>{activePrompt.name}</h2>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>

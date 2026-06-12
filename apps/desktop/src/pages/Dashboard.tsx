@@ -25,14 +25,14 @@ export const Dashboard: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
 
       {/* Header + stats — fixo */}
-      <div style={{ padding: '24px 20px 16px', flexShrink: 0 }} className="md:px-12 md:pt-10">
+      <div style={{ padding: '20px 20px 16px', flexShrink: 0 }} className="md:px-12 md:pt-10">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
           <div>
             <p style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', color: '#475569', letterSpacing: '0.2em', marginBottom: 4 }}>Command Center</p>
             <h1 style={{ fontSize: 'clamp(2rem, 6vw, 4rem)', fontWeight: 900, letterSpacing: '-0.05em', lineHeight: 1, color: '#fff' }}>
               FORGE<span style={{ color: '#6366f1' }}>AI</span>
             </h1>
-            <p style={{ color: '#64748b', marginTop: 8, fontSize: 14 }}>Orquestre intelig\u00eancia. Construa resultados.</p>
+            <p style={{ color: '#64748b', marginTop: 8, fontSize: 14 }}>Orquestre inteligência. Construa resultados.</p>
           </div>
           <button
             onClick={handleNewProject}
@@ -51,15 +51,15 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Stats grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }} className="md:grid-cols-4">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }} className="md:grid-cols-2">
           {stats.map((s, i) => (
             <div key={i} style={{
               background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 20, padding: '14px 16px',
+              borderRadius: 15, padding: '8px 6px',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                 <s.icon size={14} style={{ color: s.color }} />
-                <span style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', color: '#475569', letterSpacing: '0.1em' }}>{s.label}</span>
+                <span style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', color: '#475569',alignItems: 'center', letterSpacing: '0.1em' }}>{s.label}</span>
               </div>
               <p style={{ fontSize: 22, fontWeight: 900, color: '#fff' }}>{s.value}</p>
             </div>

@@ -11,7 +11,7 @@ const ALL_ITEMS = [
   { icon: Library,        label: 'Prompt Hub',     path: '/hub' },
   { icon: Bot,            label: 'Agentes',        path: '/agents' },
   { icon: PlayCircle,     label: 'Playground',     path: '/playground' },
-  { icon: History,        label: 'Hist\u00f3rico',      path: '/history' },
+  { icon: History,        label: 'Histórico',      path: '/history' },
   { icon: Settings,       label: 'Configura\u00e7\u00f5es',  path: '/settings' },
 ];
 
@@ -33,7 +33,7 @@ export const Sidebar: React.FC = () => {
         width: W,
         height: '100vh',
         overflow: 'hidden',
-        background: 'rgba(5,5,15,0.95)',
+        background: 'rgba(0,0,0,0.95)',
         backdropFilter: 'blur(24px)',
         borderRight: '1px solid rgba(255,255,255,0.06)',
         transition: 'width 0.25s cubic-bezier(0.4,0,0.2,1)',
@@ -114,9 +114,9 @@ export const Sidebar: React.FC = () => {
                 justifyContent: collapsed ? 'center' : 'flex-start',
                 gap: collapsed ? 0 : 12,
                 fontSize: 13.5,
-                background: isActive ? 'rgba(99,102,241,0.12)' : 'transparent',
-                border: isActive ? '1px solid rgba(99,102,241,0.25)' : '1px solid transparent',
-                color: isActive ? '#818cf8' : '#64748b',
+                background: isActive ? 'rgba(50, 50, 50, 0.2)' : 'transparent',
+                border: isActive ? '1px solid rgba(255,255,255,0.25)' : '1px solid transparent',
+                color: isActive ? '#fff' : '#6366f1', 
               }}
             >
               <item.icon size={19} style={{ flexShrink: 0 }} />
@@ -130,7 +130,7 @@ export const Sidebar: React.FC = () => {
       {!collapsed && (
         <div className="shrink-0 p-4 border-t border-white/5">
           <div style={{
-            background: 'rgba(15,23,42,0.8)', borderRadius: 14,
+            background: 'rgba(0,0,0,0.8)', borderRadius: 14,
             padding: '14px 16px', border: '1px solid rgba(255,255,255,0.06)',
           }}>
             <p className="text-[10px] font-black uppercase text-slate-600 tracking-widest mb-1.5">Plano Atual</p>
@@ -171,7 +171,7 @@ export const MobileDrawer: React.FC<{ open: boolean; onClose: () => void }> = ({
         style={{
           height: '100%',
           width: 275,
-          background: '#07070f',
+          background: '#000',
           borderRight: '1px solid rgba(255,255,255,0.08)',
           transform: open ? 'translateX(0)' : 'translateX(-100%)',
           transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
@@ -212,9 +212,9 @@ export const MobileDrawer: React.FC<{ open: boolean; onClose: () => void }> = ({
                 style={{
                   gap: 14, padding: '13px 14px', borderRadius: 14,
                   fontSize: 15, marginBottom: 2,
-                  background: isActive ? 'rgba(99,102,241,0.12)' : 'transparent',
-                  border: isActive ? '1px solid rgba(99,102,241,0.25)' : '1px solid transparent',
-                  color: isActive ? '#818cf8' : '#94a3b8',
+                  background: isActive ? 'rgba(50, 50, 50, 0.2)' : 'transparent',
+                  border: isActive ? '1px solid rgba(255,255,255,0.25)' : '1px solid transparent',
+                  color: isActive ? '#fff' : '#6366f1',
                 }}
               >
                 <item.icon size={21} style={{ flexShrink: 0 }} />
@@ -227,7 +227,7 @@ export const MobileDrawer: React.FC<{ open: boolean; onClose: () => void }> = ({
         {/* Footer */}
         <div className="shrink-0 border-t border-white/5" style={{ padding: 14 }}>
           <div style={{
-            background: 'rgba(15,23,42,0.8)', borderRadius: 14,
+            background: 'rgba(0,0,0,0.8)', borderRadius: 14,
             padding: '14px 16px', border: '1px solid rgba(255,255,255,0.06)',
           }}>
             <p className="text-[10px] font-black uppercase text-slate-600 tracking-widest mb-1.5">Plano Atual</p>

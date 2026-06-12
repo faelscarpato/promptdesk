@@ -35,16 +35,10 @@ export const SettingsPage: React.FC = () => {
     <div className="p-12 max-w-5xl mx-auto h-full overflow-y-auto animate-fade-in">
       <header className="mb-12 flex justify-between items-end">
         <div>
-          <h1 className="text-4xl font-black tracking-tight mb-2">Infraestrutura de <span className="text-indigo-500">IA</span></h1>
+          <h1 className="text-3xl font-black tracking-tight mb-2">Adicione sua <span className="text-indigo-500">IA</span></h1>
           <p className="text-slate-500 font-medium">Conecte qualquer modelo via OpenRouter, OpenAI ou endpoints locais.</p>
         </div>
-        <button 
-          onClick={handleSave}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(99,102,241,0.3)]"
-        >
-          <Save size={20} />
-          Salvar Configurações
-        </button>
+        
       </header>
 
       <div className="space-y-6">
@@ -52,7 +46,7 @@ export const SettingsPage: React.FC = () => {
           <section key={provider.id} className="glass rounded-[2rem] p-8 relative group overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 opacity-50"></div>
             
-            <div className="flex justify-between items-start mb-8">
+            <div className="flex justify-between items-start mb-5">
               <div className="flex items-center gap-4">
                 <div className="bg-white/5 p-3 rounded-2xl">
                   <Cpu className="text-indigo-400" size={24} />
@@ -114,12 +108,18 @@ export const SettingsPage: React.FC = () => {
 
         <button 
           onClick={handleAddProvider}
-          className="w-full py-8 border-2 border-dashed border-white/5 rounded-[2rem] text-slate-500 hover:text-indigo-400 hover:border-indigo-500/30 hover:bg-indigo-500/5 transition-all flex flex-col items-center gap-2 group"
+          className="w-full py-8 border-2 border-dashed border-white/5 rounded-[2rem] text-slate-500 hover:text-indigo-400 hover:border-indigo-500/30 hover:bg-indigo-500/5 transition-all flex flex-col items-center gap-2 group "
         >
           <Plus size={32} className="group-hover:scale-110 transition-transform" />
           <span className="font-bold">Adicionar Novo Endpoint de IA</span>
         </button>
       </div>
-    </div>
+   <div><button 
+          onClick={handleSave}
+          className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(99,102,241,0.3)]"
+        >
+          <Save size={20} />
+          Salvar
+        </button></div></div>
   );
 };
