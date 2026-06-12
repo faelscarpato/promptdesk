@@ -1,7 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Copy, Share2, Download, Zap, Cpu, Activity, Clock } from 'lucide-react';
+import { ArrowLeft, Copy, Download, Zap, Cpu, Activity, Clock } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
+
+function downloadText(content: string, filename: string) {
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export const LLMResult: React.FC = () => {
   const navigate = useNavigate();
@@ -19,14 +29,26 @@ export const LLMResult: React.FC = () => {
           <h1 className="text-4xl font-black tracking-tighter">NEURAL <span className="text-indigo-500">RESPONSE</span></h1>
         </div>
         <div className="flex gap-4">
-          <button className="p-4 glass rounded-2xl text-slate-400 hover:text-white transition-all"><Share2 size={20} /></button>
-          <button className="p-4 glass rounded-2xl text-slate-400 hover:text-white transition-all"><Download size={20} /></button>
-          <button 
+          <button
             onClick={() => navigator.clipboard.writeText(llmResult.content)}
-            className="bg-white text-black px-10 py-4 rounded-2xl font-black flex items-center gap-2 hover:bg-indigo-500 hover:text-white transition-all shadow-xl active:scale-95"
+            className="flex items-center gap-2 p-4 glass rounded-2xl text-slate-400 hover:text-white transition-all"
+            title="Copiar resposta"
           >
             <Copy size={20} />
-            COPY RESPONSE
+          </button>
+          <button
+            onClick={() => downloadText(llmResult.content, 'neural-response.md')}
+            className="flex items-center gap-2 p-4 glass rounded-2xl text-slate-400 hover:text-white transition-all"
+            title="Baixar como .md"
+          >
+            <Download size={20} />
+          </button>
+          <button
+            onClick={() => downloadText(llmResult.content, 'neural-response.txt')}
+            className="bg-white text-black px-10 py-4 rounded-2xl font-black flex items-center gap-2 hover:bg-indigo-500 hover:text-white transition-all shadow-xl active:scale-95"
+          >
+            <Download size={20} />
+            BAIXAR .TXT
           </button>
         </div>
       </header>

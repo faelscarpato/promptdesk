@@ -1,13 +1,14 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  FolderKanban, 
-  Library, 
-  PlayCircle, 
+import {
+  LayoutDashboard,
+  FolderKanban,
+  Library,
+  PlayCircle,
   Settings,
   Zap,
-  Bot
+  Bot,
+  History,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -20,6 +21,7 @@ export const Sidebar: React.FC = () => {
     { icon: Library, label: 'Prompt Hub', path: '/hub' },
     { icon: Bot, label: 'Agentes', path: '/agents' },
     { icon: PlayCircle, label: 'Playground', path: '/playground' },
+    { icon: History, label: 'Histórico', path: '/history' },
     { icon: Settings, label: 'Configurações', path: '/settings' },
   ];
 
@@ -34,16 +36,16 @@ export const Sidebar: React.FC = () => {
 
       <nav className="flex-1 px-4 space-y-2 mt-4">
         {menuItems.map((item) => {
-          const isActive = location.pathname === item.path || 
-            (item.path === '/agents' && location.pathname.startsWith('/agents'));
+          const isActive = location.pathname === item.path ||
+            (item.path !== '/' && location.pathname.startsWith(item.path));
           return (
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
               className={`
                 w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all
-                ${isActive 
-                  ? 'bg-blue-600/10 text-blue-500 border border-blue-600/20' 
+                ${isActive
+                  ? 'bg-blue-600/10 text-blue-500 border border-blue-600/20'
                   : 'hover:bg-slate-800 hover:text-slate-200'}
               `}
             >

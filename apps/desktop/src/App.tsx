@@ -8,6 +8,7 @@ import { SettingsPage } from './pages/Settings';
 import { PromptHub } from './pages/PromptHub';
 import { Playground } from './pages/Playground';
 import { AgentGallery } from './pages/AgentGallery';
+import { ChatHistory } from './pages/ChatHistory';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/playground" element={<Playground />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/agents" element={<AgentGallery />} />
+            <Route path="/history" element={<ChatHistory />} />
           </Routes>
         </main>
       </div>

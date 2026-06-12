@@ -23,12 +23,12 @@ export interface PromptVersion {
 
 export interface PromptMaster {
   id: string;
-  title: string;
+  title?: string;
   modules: PromptModule[];
   context: string;
   outputFormat: 'json' | 'yaml' | 'txt' | 'md';
   niche: string;
-  tags: string[];
+  tags?: string[];
   versions: PromptVersion[];
   currentVersionId?: string;
 }
@@ -82,7 +82,7 @@ export interface FileContext {
   fileName: string;
   fileType: 'pdf' | 'xlsx' | 'docx' | 'txt';
   extractedText: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface Project {
@@ -92,12 +92,12 @@ export interface Project {
   files: FileContext[];
   prompts: PromptMaster[];
   createdAt: string;
-versions: Version[]; 
+  versions: PromptVersion[];
 }
 
 export interface LLMProvider {
   id: string;
-  name: 'openai' | 'claude' | 'gemini' | 'ollama';
+  name: string;
   apiKey: string;
   model: string;
   baseUrl?: string;

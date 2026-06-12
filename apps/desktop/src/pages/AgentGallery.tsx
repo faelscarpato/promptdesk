@@ -3,13 +3,13 @@ import { open } from '@tauri-apps/api/dialog';
 import { readBinaryFile } from '@tauri-apps/api/fs';
 import { callLLM } from '../lib/llmClient';
 import { useAppStore } from '../store/appStore';
+import { saveChatHistory, ChatHistoryEntry } from './ChatHistory';
 import { AGENTS, CATEGORY_COLORS, CATEGORY_ICONS, Agent, AgentCategory } from '../data/agents';
 import {
   Bot, Send, Paperclip, Download, Copy, Check,
   X, ChevronLeft, Search, Code2, FileText, Image as ImageIcon, Sparkles
 } from 'lucide-react';
 
-// ---------- types ----------
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -17,7 +17,6 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-// ---------- helpers ----------
 function detectCodeBlock(text: string): { isCode: boolean; language: string; code: string } {
   const match = text.match(/```([\w]*)?\n([\s\S]*?)```/);
   if (match) return { isCode: true, language: match[1] || 'text', code: match[2].trim() };
@@ -35,25 +34,13 @@ function downloadText(content: string, filename: string) {
 }
 
 // ---------- CodeCanvas ----------
-interface CodeCanvasProps { code: string; language: string; }
-const CodeCanvas: React.FC<CodeCanvasProps> = ({ code, language }) => {
+const CodeCanvas: React.FC<{ code: string; language: string }> = ({ code, language }) => {
   const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
+  const handleCopy = () => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); };
   const handleDownload = () => {
-    const ext: Record<string, string> = {
-      typescript: 'ts', javascript: 'js', python: 'py',
-      rust: 'rs', html: 'html', css: 'css', json: 'json',
-      markdown: 'md', sql: 'sql', bash: 'sh', shell: 'sh',
-    };
+    const ext: Record<string, string> = { typescript: 'ts', javascript: 'js', python: 'py', rust: 'rs', html: 'html', css: 'css', json: 'json', markdown: 'md', sql: 'sql', bash: 'sh', shell: 'sh' };
     downloadText(code, `codigo.${ext[language] ?? language ?? 'txt'}`);
   };
-
   return (
     <div className="mt-3 rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
       <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
@@ -62,25 +49,16 @@ const CodeCanvas: React.FC<CodeCanvasProps> = ({ code, language }) => {
           <span className="text-xs font-mono text-slate-400 uppercase">{language || 'código'}</span>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-1 text-xs px-3 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition-all"
-          >
+          <button onClick={handleCopy} className="flex items-center gap-1 text-xs px-3 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition-all">
             {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
             {copied ? 'Copiado!' : 'Copiar'}
           </button>
-          <button
-            onClick={handleDownload}
-            className="flex items-center gap-1 text-xs px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-all"
-          >
-            <Download size={12} />
-            Baixar
+          <button onClick={handleDownload} className="flex items-center gap-1 text-xs px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-all">
+            <Download size={12} /> Baixar
           </button>
         </div>
       </div>
-      <pre className="p-4 text-sm font-mono text-slate-200 overflow-x-auto whitespace-pre-wrap max-h-96">
-        <code>{code}</code>
-      </pre>
+      <pre className="p-4 text-sm font-mono text-slate-200 overflow-x-auto whitespace-pre-wrap max-h-96"><code>{code}</code></pre>
     </div>
   );
 };
@@ -90,25 +68,12 @@ const MessageBubble: React.FC<{ msg: ChatMessage; agentName: string }> = ({ msg,
   const [copied, setCopied] = useState(false);
   const isUser = msg.role === 'user';
   const codeBlock = !isUser ? detectCodeBlock(msg.content) : { isCode: false, language: '', code: '' };
-
-  const textContent = codeBlock.isCode
-    ? msg.content.replace(/```[\w]*?\n[\s\S]*?```/, '').trim()
-    : msg.content;
-
-  const handleDownloadResponse = () => {
-    downloadText(msg.content, `resposta-${agentName.toLowerCase().replace(/\s+/g, '-')}.md`);
-  };
-
-  const handleCopyAll = () => {
-    navigator.clipboard.writeText(msg.content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const textContent = codeBlock.isCode ? msg.content.replace(/```[\w]*?\n[\s\S]*?```/, '').trim() : msg.content;
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold mr-3 mt-1 shrink-0">
+        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white mr-3 mt-1 shrink-0">
           <Bot size={14} />
         </div>
       )}
@@ -127,38 +92,29 @@ const MessageBubble: React.FC<{ msg: ChatMessage; agentName: string }> = ({ msg,
           </div>
         )}
         {textContent && <p className="text-sm leading-relaxed whitespace-pre-wrap">{textContent}</p>}
-        {codeBlock.isCode && (
-          <CodeCanvas code={codeBlock.code} language={codeBlock.language} />
-        )}
+        {codeBlock.isCode && <CodeCanvas code={codeBlock.code} language={codeBlock.language} />}
         {!isUser && (
-          <div className="flex gap-2 mt-3 pt-2 border-t border-slate-700">
-            <button
-              onClick={handleCopyAll}
-              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors"
-            >
+          <div className="flex gap-3 mt-3 pt-2 border-t border-slate-700">
+            <button onClick={() => { navigator.clipboard.writeText(msg.content); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors">
               {copied ? <Check size={11} className="text-green-400" /> : <Copy size={11} />}
               {copied ? 'Copiado' : 'Copiar'}
             </button>
-            <button
-              onClick={handleDownloadResponse}
-              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors"
-            >
-              <Download size={11} />
-              Baixar .md
+            <button onClick={() => downloadText(msg.content, `resposta-${agentName.toLowerCase().replace(/\s+/g, '-')}.md`)}
+              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors">
+              <Download size={11} /> Baixar .md
             </button>
           </div>
         )}
-        <p className="text-[10px] mt-1 opacity-40">
-          {msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-        </p>
+        <p className="text-[10px] mt-1 opacity-40">{msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
       </div>
     </div>
   );
 };
 
 // ---------- AgentChat ----------
-interface AgentChatProps { agent: Agent; onBack: () => void; }
-const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
+const AgentChat: React.FC<{ agent: Agent; onBack: () => void }> = ({ agent, onBack }) => {
+  const sessionId = useRef(crypto.randomUUID());
   const [messages, setMessages] = useState<ChatMessage[]>([{
     role: 'assistant',
     content: `Olá! Sou o **${agent.name}**. ${agent.desc}\n\nComo posso te ajudar hoje?`,
@@ -169,85 +125,69 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
   const [loading, setLoading] = useState(false);
   const [activeProviderIdx, setActiveProviderIdx] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
-
-  // ✅ Mesmo store que o Playground usa — lê os provedores já configurados
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { settings } = useAppStore();
   const activeProvider = settings.providers[activeProviderIdx];
 
+  // Auto-scroll a cada nova mensagem
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
+  // Salva histórico a cada atualização de mensagens
+  useEffect(() => {
+    if (messages.length <= 1) return;
+    const entry: ChatHistoryEntry = {
+      id: sessionId.current,
+      agentId: agent.id,
+      agentName: agent.name,
+      agentCategory: agent.category,
+      messages: messages.map(m => ({
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp.toISOString(),
+      })),
+      createdAt: messages[0].timestamp.toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    saveChatHistory(entry);
+  }, [messages]);
+
   const handleAttach = async () => {
     try {
-      const selected = await open({
-        multiple: true,
-        filters: [{ name: 'Arquivos suportados', extensions: ['pdf', 'txt', 'md'] }],
-      });
+      const selected = await open({ multiple: true, filters: [{ name: 'Suportados', extensions: ['pdf', 'txt', 'md'] }] });
       if (!selected) return;
       const paths = Array.isArray(selected) ? selected : [selected];
-      const files = await Promise.all(
-        paths.map(async (p) => {
-          const bytes = await readBinaryFile(p);
-          const text = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
-          const name = p.split(/[\\/]/).pop() ?? p;
-          return { name, content: text.slice(0, 8000) };
-        })
-      );
-      setAttachedFiles((prev) => [...prev, ...files]);
-    } catch (e) {
-      console.error('Erro ao anexar arquivo:', e);
-    }
+      const files = await Promise.all(paths.map(async (p) => {
+        const bytes = await readBinaryFile(p);
+        const text = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+        return { name: p.split(/[\\/]/).pop() ?? p, content: text.slice(0, 8000) };
+      }));
+      setAttachedFiles(prev => [...prev, ...files]);
+    } catch (e) { console.error(e); }
   };
 
   const handleSend = async () => {
     if (!input.trim() && attachedFiles.length === 0) return;
-    if (!activeProvider) {
-      alert('Configure um provedor de IA nas Configurações primeiro!');
-      return;
-    }
+    if (!activeProvider) { alert('Configure um provedor de IA nas Configurações primeiro!'); return; }
 
-    const userContent = [
-      input,
-      ...attachedFiles.map((f) => `\n\n--- Arquivo: ${f.name} ---\n${f.content}`),
-    ].join('');
+    const userContent = [input, ...attachedFiles.map(f => `\n\n--- Arquivo: ${f.name} ---\n${f.content}`)].join('');
+    const userMsg: ChatMessage = { role: 'user', content: userContent, files: attachedFiles.map(f => f.name), timestamp: new Date() };
 
-    const userMsg: ChatMessage = {
-      role: 'user',
-      content: userContent,
-      files: attachedFiles.map((f) => f.name),
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages(prev => [...prev, userMsg]);
     setInput('');
     setAttachedFiles([]);
     setLoading(true);
+    if (textareaRef.current) { textareaRef.current.style.height = 'auto'; }
 
-    const history = messages
-      .map((m) => `${m.role === 'user' ? 'Usuário' : 'Assistente'}: ${m.content}`)
-      .join('\n');
-
-    const fullPrompt = [
-      agent.systemPrompt,
-      '\n\n--- Histórico ---\n' + history,
-      '\n\nUsuário: ' + userContent,
-      '\n\nAssistente:',
-    ].join('');
+    const history = messages.map(m => `${m.role === 'user' ? 'Usuário' : 'Assistente'}: ${m.content}`).join('\n');
+    const fullPrompt = [agent.systemPrompt, '\n\n--- Histórico ---\n' + history, '\n\nUsuário: ' + userContent, '\n\nAssistente:'].join('');
 
     try {
       const res = await callLLM(activeProvider, fullPrompt, 0.7);
-      setMessages((prev) => [...prev, {
-        role: 'assistant',
-        content: res.content,
-        timestamp: new Date(),
-      }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: res.content, timestamp: new Date() }]);
     } catch (e) {
-      setMessages((prev) => [...prev, {
-        role: 'assistant',
-        content: `❌ Erro: ${e}`,
-        timestamp: new Date(),
-      }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `❌ Erro: ${e}`, timestamp: new Date() }]);
     } finally {
       setLoading(false);
     }
@@ -260,12 +200,11 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
   const categoryColor = CATEGORY_COLORS[agent.category];
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center gap-4 px-6 py-4 border-b border-white/5 bg-black/20">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Header fixo */}
+      <div className="flex items-center gap-4 px-6 py-4 border-b border-white/5 bg-black/20 shrink-0">
         <button onClick={onBack} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
-          <ChevronLeft size={20} />
-          <span className="text-sm">Galeria</span>
+          <ChevronLeft size={20} /><span className="text-sm">Galeria</span>
         </button>
         <div className="w-px h-6 bg-slate-700" />
         <div className="flex items-center gap-3 flex-1">
@@ -274,12 +213,9 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
           </div>
           <div>
             <h2 className="text-white font-bold text-sm">{agent.name}</h2>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${categoryColor}`}>
-              {agent.subcategory}
-            </span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${categoryColor}`}>{agent.subcategory}</span>
           </div>
         </div>
-        {/* Provider selector — igual ao Playground */}
         {settings.providers.length > 1 && (
           <select
             value={activeProviderIdx}
@@ -287,9 +223,7 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
             className="bg-slate-800 border border-slate-700 text-xs text-indigo-400 font-bold rounded-lg px-3 py-1.5 focus:ring-0 cursor-pointer"
           >
             {settings.providers.map((p, i) => (
-              <option key={p.id} value={i} className="bg-slate-900 text-white">
-                {p.name || `Provider ${i + 1}`}
-              </option>
+              <option key={p.id} value={i} className="bg-slate-900 text-white">{p.name || `Provider ${i + 1}`}</option>
             ))}
           </select>
         )}
@@ -300,14 +234,12 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
         )}
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
-        {messages.map((msg, i) => (
-          <MessageBubble key={i} msg={msg} agentName={agent.name} />
-        ))}
+      {/* Área de mensagens com scroll */}
+      <div className="flex-1 overflow-y-auto px-6 py-4">
+        {messages.map((msg, i) => <MessageBubble key={i} msg={msg} agentName={agent.name} />)}
         {loading && (
-          <div className="flex items-center gap-3 text-slate-400 mb-4">
-            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
               <Bot size={14} className="text-white" />
             </div>
             <div className="flex gap-1">
@@ -320,17 +252,14 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
         <div ref={bottomRef} />
       </div>
 
-      {/* Attached files preview */}
+      {/* Preview de arquivos anexados */}
       {attachedFiles.length > 0 && (
-        <div className="px-6 py-2 flex flex-wrap gap-2 border-t border-slate-800">
+        <div className="px-6 py-2 flex flex-wrap gap-2 border-t border-slate-800 shrink-0">
           {attachedFiles.map((f, i) => (
             <div key={i} className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1">
               <FileText size={12} className="text-indigo-400" />
               <span className="text-xs text-slate-300">{f.name}</span>
-              <button
-                onClick={() => setAttachedFiles((prev) => prev.filter((_, j) => j !== i))}
-                className="text-slate-500 hover:text-red-400 transition-colors ml-1"
-              >
+              <button onClick={() => setAttachedFiles(prev => prev.filter((_, j) => j !== i))} className="text-slate-500 hover:text-red-400 transition-colors ml-1">
                 <X size={12} />
               </button>
             </div>
@@ -338,29 +267,25 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
         </div>
       )}
 
-      {/* Input */}
-      <div className="px-6 py-4 border-t border-white/5 bg-black/10">
+      {/* Input FIXO na parte inferior */}
+      <div className="px-6 py-4 border-t border-white/5 bg-black/30 shrink-0">
         <div className="flex items-end gap-3 bg-slate-800/80 border border-slate-700 rounded-2xl px-4 py-3">
-          <button
-            onClick={handleAttach}
-            title="Anexar PDF, TXT ou MD"
-            className="text-slate-500 hover:text-indigo-400 transition-colors shrink-0 mb-1"
-          >
+          <button onClick={handleAttach} title="Anexar PDF, TXT ou MD"
+            className="text-slate-500 hover:text-indigo-400 transition-colors shrink-0 mb-1">
             <Paperclip size={20} />
           </button>
           <textarea
-            className="flex-1 bg-transparent text-white text-sm resize-none outline-none placeholder:text-slate-500 max-h-40 min-h-[24px]"
+            ref={textareaRef}
+            className="flex-1 bg-transparent text-white text-sm resize-none outline-none placeholder:text-slate-500 max-h-36 min-h-[24px]"
             placeholder="Mensagem... (Enter envia, Shift+Enter nova linha)"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              e.target.style.height = 'auto';
+              e.target.style.height = e.target.scrollHeight + 'px';
+            }}
             onKeyDown={handleKeyDown}
             rows={1}
-            style={{ height: 'auto' }}
-            onInput={(e) => {
-              const t = e.target as HTMLTextAreaElement;
-              t.style.height = 'auto';
-              t.style.height = t.scrollHeight + 'px';
-            }}
           />
           <button
             onClick={handleSend}
@@ -371,7 +296,7 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
           </button>
         </div>
         <p className="text-[10px] text-slate-600 text-center mt-2">
-          Provedor: {activeProvider?.name || activeProvider?.model || 'Não configurado'} • PDF, TXT e MD suportados
+          Provedor: {activeProvider?.name || activeProvider?.model || 'Não configurado'} • PDF, TXT, MD suportados
         </p>
       </div>
     </div>
@@ -383,57 +308,42 @@ const AgentCard: React.FC<{ agent: Agent; onClick: () => void }> = ({ agent, onC
   const color = CATEGORY_COLORS[agent.category];
   const icon = CATEGORY_ICONS[agent.category];
   return (
-    <button
-      onClick={onClick}
-      className="group text-left bg-slate-900/60 hover:bg-slate-800/80 border border-white/5 hover:border-indigo-500/30 rounded-2xl p-5 transition-all duration-200 hover:shadow-[0_0_24px_rgba(99,102,241,0.15)] hover:-translate-y-0.5"
-    >
+    <button onClick={onClick}
+      className="group text-left bg-slate-900/60 hover:bg-slate-800/80 border border-white/5 hover:border-indigo-500/30 rounded-2xl p-5 transition-all duration-200 hover:shadow-[0_0_24px_rgba(99,102,241,0.15)] hover:-translate-y-0.5">
       <div className="flex items-start justify-between mb-3">
-        <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center text-xl">
-          {icon}
-        </div>
+        <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center text-xl">{icon}</div>
         {agent.isImageAgent && (
           <span className="flex items-center gap-1 text-[10px] text-pink-400 bg-pink-500/10 px-2 py-0.5 rounded-full border border-pink-500/20">
             <Sparkles size={9} /> IA Visual
           </span>
         )}
       </div>
-      <h3 className="text-white font-bold text-sm mb-1 group-hover:text-indigo-300 transition-colors line-clamp-1">
-        {agent.name}
-      </h3>
+      <h3 className="text-white font-bold text-sm mb-1 group-hover:text-indigo-300 transition-colors line-clamp-1">{agent.name}</h3>
       <p className="text-slate-500 text-xs leading-relaxed mb-3 line-clamp-2">{agent.desc}</p>
-      <span className={`text-[10px] px-2 py-1 rounded-full border ${color}`}>
-        {agent.subcategory}
-      </span>
+      <span className={`text-[10px] px-2 py-1 rounded-full border ${color}`}>{agent.subcategory}</span>
     </button>
   );
 };
 
-// ---------- AgentGallery (main page) ----------
+// ---------- AgentGallery ----------
 export const AgentGallery: React.FC = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<AgentCategory | 'Todos'>('Todos');
 
   const categories: (AgentCategory | 'Todos')[] = [
-    'Todos',
-    'Programação', 'Educação', 'Produtividade', 'Escrita',
+    'Todos', 'Programação', 'Educação', 'Produtividade', 'Escrita',
     'Pesquisa e análise', 'Engenharia', 'Geração de Imagem', 'Estilo de vida',
   ];
 
-  const filtered = AGENTS.filter((a) => {
-    const matchSearch =
-      a.name.toLowerCase().includes(search.toLowerCase()) ||
-      a.desc.toLowerCase().includes(search.toLowerCase());
+  const filtered = AGENTS.filter(a => {
+    const matchSearch = a.name.toLowerCase().includes(search.toLowerCase()) || a.desc.toLowerCase().includes(search.toLowerCase());
     const matchCat = activeCategory === 'Todos' || a.category === activeCategory;
     return matchSearch && matchCat;
   });
 
   if (selectedAgent) {
-    return (
-      <div className="h-full flex flex-col">
-        <AgentChat agent={selectedAgent} onBack={() => setSelectedAgent(null)} />
-      </div>
-    );
+    return <div className="h-full flex flex-col"><AgentChat agent={selectedAgent} onBack={() => setSelectedAgent(null)} /></div>;
   }
 
   return (
@@ -442,9 +352,7 @@ export const AgentGallery: React.FC = () => {
         <div className="flex items-center gap-3 mb-1">
           <Bot size={24} className="text-indigo-400" />
           <h1 className="text-2xl font-black text-white">Galeria de Agentes</h1>
-          <span className="bg-indigo-600/20 text-indigo-400 text-xs font-bold px-2 py-1 rounded-full border border-indigo-500/30">
-            {AGENTS.length} agentes
-          </span>
+          <span className="bg-indigo-600/20 text-indigo-400 text-xs font-bold px-2 py-1 rounded-full border border-indigo-500/30">{AGENTS.length} agentes</span>
         </div>
         <p className="text-slate-500 text-sm">Selecione um agente para iniciar um chat especializado</p>
       </div>
@@ -452,25 +360,18 @@ export const AgentGallery: React.FC = () => {
       <div className="px-8 pb-4">
         <div className="relative mb-4">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input
-            type="text"
-            placeholder="Buscar agentes..."
-            value={search}
+          <input type="text" placeholder="Buscar agentes..." value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-800/60 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-indigo-500/50 transition-colors"
-          />
+            className="w-full bg-slate-800/60 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-indigo-500/50 transition-colors" />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat as AgentCategory | 'Todos')}
+          {categories.map(cat => (
+            <button key={cat} onClick={() => setActiveCategory(cat as AgentCategory | 'Todos')}
               className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
                 activeCategory === cat
                   ? 'bg-indigo-600 border-indigo-500 text-white'
                   : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'
-              }`}
-            >
+              }`}>
               {cat !== 'Todos' && CATEGORY_ICONS[cat as AgentCategory]} {cat}
             </button>
           ))}
@@ -485,9 +386,7 @@ export const AgentGallery: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filtered.map((agent) => (
-              <AgentCard key={agent.id} agent={agent} onClick={() => setSelectedAgent(agent)} />
-            ))}
+            {filtered.map(agent => <AgentCard key={agent.id} agent={agent} onClick={() => setSelectedAgent(agent)} />)}
           </div>
         )}
       </div>
