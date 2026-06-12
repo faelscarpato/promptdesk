@@ -1,0 +1,31 @@
+// vite.config.web.ts — build sem Tauri para deploy web (Cloudflare Pages)
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      // Mock do @tauri-apps/api para build web
+      '@tauri-apps/api/dialog': path.resolve(__dirname, './src/mocks/tauri-dialog.ts'),
+      '@tauri-apps/api/fs':     path.resolve(__dirname, './src/mocks/tauri-fs.ts'),
+      '@tauri-apps/api/shell':  path.resolve(__dirname, './src/mocks/tauri-shell.ts'),
+      '@tauri-apps/api':        path.resolve(__dirname, './src/mocks/tauri.ts'),
+    },
+  },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui:     ['lucide-react', 'zustand'],
+        },
+      },
+    },
+  },
+  base: '/',
+});

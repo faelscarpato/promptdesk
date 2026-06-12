@@ -1,0 +1,7 @@
+# Cloudflare Pages — configuracao do projeto
+name = "promptdesk"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "apps/desktop/dist"
+
+[build]
+command = "cd apps/desktop && npm install --legacy-peer-deps && npm run build:web"
