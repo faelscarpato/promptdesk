@@ -18,28 +18,16 @@ const DOCK_ITEMS = [
   { icon: Settings,        label: 'Config',  path: '/settings' },
 ];
 
-/* Dockbar fica FORA do main para nunca ser cortado por overflow:hidden */
+// Dockbar — position:fixed para nunca ser cortado por overflow:hidden
+// Visibilidade controlada SOMENTE por classes Tailwind (sem display inline)
 function MobileDock() {
   const navigate = useNavigate();
   const location = useLocation();
   return (
-    <nav
-      style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-around',
-        background: 'rgba(0,0,0,0.85)',
-        backdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
-        paddingTop: '10px',
-        paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
-      }}
-      className="md:hidden"
+    <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-[9999]
+      items-center justify-around
+      bg-black/90 backdrop-blur-xl border-t border-white/10"
+      style={{ paddingTop: 10, paddingBottom: 'max(14px, env(safe-area-inset-bottom))' }}
     >
       {DOCK_ITEMS.map((item) => {
         const isActive =
@@ -49,17 +37,10 @@ function MobileDock() {
           <button
             key={item.path}
             onClick={() => navigate(item.path)}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '4px 24px' }}
+            className="flex flex-col items-center gap-1 px-6 py-0 bg-transparent border-none cursor-pointer"
           >
-            <item.icon
-              size={24}
-              style={{ color: isActive ? '#818cf8' : '#64748b' }}
-            />
-            <span style={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: isActive ? '#818cf8' : '#64748b',
-            }}>
+            <item.icon size={22} className={isActive ? 'text-indigo-400' : 'text-slate-500'} />
+            <span className={`text-[10px] font-bold ${ isActive ? 'text-indigo-400' : 'text-slate-500' }`}>
               {item.label}
             </span>
           </button>
@@ -73,7 +54,6 @@ function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
 
-  // Label da pagina atual para o topbar
   const pageLabels: Record<string, string> = {
     '/': 'Dashboard', '/projects': 'Projetos', '/hub': 'Prompt Hub',
     '/agents': 'Agentes', '/playground': 'Playground',
@@ -85,48 +65,39 @@ function AppShell() {
      location.pathname.startsWith('/builder') ? 'Builder' : 'ForgeAI');
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#000', color: '#fff' }}>
+    // Shell raiz — nunca rola
+    <div className="flex bg-black text-white" style={{ height: '100vh', overflow: 'hidden' }}>
 
-      {/* ===== SIDEBAR DESKTOP ===== */}
+      {/* Sidebar — hidden em mobile, flex em md+ */}
       <Sidebar />
 
-      {/* ===== DRAWER MOBILE ===== */}
+      {/* Drawer mobile */}
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
-      {/* ===== COLUNA DIREITA ===== */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', minWidth: 0 }}>
+      {/* Coluna de conteudo */}
+      <div className="flex flex-col flex-1 min-w-0" style={{ height: '100vh', overflow: 'hidden' }}>
 
-        {/* Topbar mobile */}
-        <header
-          className="md:hidden"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px 16px',
-            background: 'rgba(0,0,0,0.7)',
-            backdropFilter: 'blur(20px)',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            flexShrink: 0,
-            zIndex: 10,
-          }}
+        {/* Topbar — APENAS mobile (flex em < md, hidden em md+) */}
+        <header className="flex md:hidden items-center justify-between shrink-0
+          px-4 py-3 border-b border-white/5"
+          style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(20px)', zIndex: 10 }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setDrawerOpen(true)}
-              style={{ background: 'transparent', border: 'none', color: '#94a3b8', padding: 8, cursor: 'pointer', borderRadius: 10 }}
+              className="p-2 text-slate-400 bg-transparent border-none cursor-pointer rounded-xl"
             >
               <Menu size={22} />
             </button>
-            <span style={{ fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: '-0.04em' }}>
-              Forge<span style={{ color: '#6366f1' }}>AI</span>
+            <span className="text-lg font-black tracking-tight">
+              Forge<span className="text-indigo-500">AI</span>
             </span>
           </div>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>{currentLabel}</span>
+          <span className="text-xs font-bold text-slate-500">{currentLabel}</span>
         </header>
 
-        {/* Area de conteudo */}
-        <main style={{ flex: 1, overflow: 'hidden' }}>
+        {/* Conteudo das paginas */}
+        <main className="flex-1" style={{ overflow: 'hidden' }}>
           <Routes>
             <Route path="/"            element={<Dashboard />} />
             <Route path="/projects"    element={<Dashboard />} />
@@ -141,11 +112,11 @@ function AppShell() {
           </Routes>
         </main>
 
-        {/* Espacador para o dock nao cobrir o conteudo em mobile */}
-        <div className="md:hidden" style={{ height: 70, flexShrink: 0 }} />
+        {/* Espacador do dock — APENAS mobile */}
+        <div className="block md:hidden shrink-0" style={{ height: 68 }} />
       </div>
 
-      {/* ===== DOCKBAR (position:fixed, fora de qualquer overflow) ===== */}
+      {/* Dockbar — renderizado aqui mas position:fixed, invisivel em md+ */}
       <MobileDock />
     </div>
   );
