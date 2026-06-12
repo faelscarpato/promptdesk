@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { open } from '@tauri-apps/api/dialog';
 import { readBinaryFile } from '@tauri-apps/api/fs';
 import { callLLM } from '../lib/llmClient';
-import { useSettingsStore } from '../store/settingsStore';
+import { useAppStore } from '../store/appStore';
 import { AGENTS, CATEGORY_COLORS, CATEGORY_ICONS, Agent, AgentCategory } from '../data/agents';
 import {
   Bot, Send, Paperclip, Download, Copy, Check,
@@ -14,8 +14,6 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   files?: string[];
-  isCode?: boolean;
-  codeLanguage?: string;
   timestamp: Date;
 }
 
@@ -37,10 +35,7 @@ function downloadText(content: string, filename: string) {
 }
 
 // ---------- CodeCanvas ----------
-interface CodeCanvasProps {
-  code: string;
-  language: string;
-}
+interface CodeCanvasProps { code: string; language: string; }
 const CodeCanvas: React.FC<CodeCanvasProps> = ({ code, language }) => {
   const [copied, setCopied] = useState(false);
 
@@ -162,10 +157,7 @@ const MessageBubble: React.FC<{ msg: ChatMessage; agentName: string }> = ({ msg,
 };
 
 // ---------- AgentChat ----------
-interface AgentChatProps {
-  agent: Agent;
-  onBack: () => void;
-}
+interface AgentChatProps { agent: Agent; onBack: () => void; }
 const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([{
     role: 'assistant',
@@ -175,8 +167,12 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
   const [input, setInput] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; content: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeProviderIdx, setActiveProviderIdx] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const { provider } = useSettingsStore();
+
+  // ✅ Mesmo store que o Playground usa — lê os provedores já configurados
+  const { settings } = useAppStore();
+  const activeProvider = settings.providers[activeProviderIdx];
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -206,6 +202,11 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
 
   const handleSend = async () => {
     if (!input.trim() && attachedFiles.length === 0) return;
+    if (!activeProvider) {
+      alert('Configure um provedor de IA nas Configurações primeiro!');
+      return;
+    }
+
     const userContent = [
       input,
       ...attachedFiles.map((f) => `\n\n--- Arquivo: ${f.name} ---\n${f.content}`),
@@ -235,7 +236,7 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
     ].join('');
 
     try {
-      const res = await callLLM(provider, fullPrompt, 0.7);
+      const res = await callLLM(activeProvider, fullPrompt, 0.7);
       setMessages((prev) => [...prev, {
         role: 'assistant',
         content: res.content,
@@ -244,7 +245,7 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
     } catch (e) {
       setMessages((prev) => [...prev, {
         role: 'assistant',
-        content: `❌ Erro ao chamar o modelo: ${e}`,
+        content: `❌ Erro: ${e}`,
         timestamp: new Date(),
       }]);
     } finally {
@@ -253,10 +254,7 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
   const categoryColor = CATEGORY_COLORS[agent.category];
@@ -265,10 +263,7 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center gap-4 px-6 py-4 border-b border-white/5 bg-black/20">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-        >
+        <button onClick={onBack} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
           <ChevronLeft size={20} />
           <span className="text-sm">Galeria</span>
         </button>
@@ -284,6 +279,20 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
             </span>
           </div>
         </div>
+        {/* Provider selector — igual ao Playground */}
+        {settings.providers.length > 1 && (
+          <select
+            value={activeProviderIdx}
+            onChange={(e) => setActiveProviderIdx(Number(e.target.value))}
+            className="bg-slate-800 border border-slate-700 text-xs text-indigo-400 font-bold rounded-lg px-3 py-1.5 focus:ring-0 cursor-pointer"
+          >
+            {settings.providers.map((p, i) => (
+              <option key={p.id} value={i} className="bg-slate-900 text-white">
+                {p.name || `Provider ${i + 1}`}
+              </option>
+            ))}
+          </select>
+        )}
         {agent.isImageAgent && (
           <span className="flex items-center gap-1 text-xs text-pink-400 bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20">
             <ImageIcon size={12} /> Geração de Imagem
@@ -292,12 +301,12 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-2">
+      <div className="flex-1 overflow-y-auto px-6 py-6">
         {messages.map((msg, i) => (
           <MessageBubble key={i} msg={msg} agentName={agent.name} />
         ))}
         {loading && (
-          <div className="flex items-center gap-3 text-slate-400">
+          <div className="flex items-center gap-3 text-slate-400 mb-4">
             <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">
               <Bot size={14} className="text-white" />
             </div>
@@ -320,7 +329,7 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
               <span className="text-xs text-slate-300">{f.name}</span>
               <button
                 onClick={() => setAttachedFiles((prev) => prev.filter((_, j) => j !== i))}
-                className="text-slate-500 hover:text-red-400 transition-colors"
+                className="text-slate-500 hover:text-red-400 transition-colors ml-1"
               >
                 <X size={12} />
               </button>
@@ -362,7 +371,7 @@ const AgentChat: React.FC<AgentChatProps> = ({ agent, onBack }) => {
           </button>
         </div>
         <p className="text-[10px] text-slate-600 text-center mt-2">
-          Suporta PDF, TXT e MD • Respostas de código com download e cópia
+          Provedor: {activeProvider?.name || activeProvider?.model || 'Não configurado'} • PDF, TXT e MD suportados
         </p>
       </div>
     </div>
@@ -399,7 +408,7 @@ const AgentCard: React.FC<{ agent: Agent; onClick: () => void }> = ({ agent, onC
   );
 };
 
-// ---------- AgentGallery ----------
+// ---------- AgentGallery (main page) ----------
 export const AgentGallery: React.FC = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [search, setSearch] = useState('');
@@ -412,7 +421,8 @@ export const AgentGallery: React.FC = () => {
   ];
 
   const filtered = AGENTS.filter((a) => {
-    const matchSearch = a.name.toLowerCase().includes(search.toLowerCase()) ||
+    const matchSearch =
+      a.name.toLowerCase().includes(search.toLowerCase()) ||
       a.desc.toLowerCase().includes(search.toLowerCase());
     const matchCat = activeCategory === 'Todos' || a.category === activeCategory;
     return matchSearch && matchCat;
@@ -428,7 +438,6 @@ export const AgentGallery: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Header */}
       <div className="px-8 pt-8 pb-4">
         <div className="flex items-center gap-3 mb-1">
           <Bot size={24} className="text-indigo-400" />
@@ -440,7 +449,6 @@ export const AgentGallery: React.FC = () => {
         <p className="text-slate-500 text-sm">Selecione um agente para iniciar um chat especializado</p>
       </div>
 
-      {/* Filters */}
       <div className="px-8 pb-4">
         <div className="relative mb-4">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -456,7 +464,7 @@ export const AgentGallery: React.FC = () => {
           {categories.map((cat) => (
             <button
               key={cat}
-              onClick={() => setActiveCategory(cat)}
+              onClick={() => setActiveCategory(cat as AgentCategory | 'Todos')}
               className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
                 activeCategory === cat
                   ? 'bg-indigo-600 border-indigo-500 text-white'
@@ -469,7 +477,6 @@ export const AgentGallery: React.FC = () => {
         </div>
       </div>
 
-      {/* Grid */}
       <div className="flex-1 overflow-y-auto px-8 pb-8">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-slate-500">
