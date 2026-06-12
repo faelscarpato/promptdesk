@@ -1,0 +1,7 @@
+name = "llm-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Para deploy:
+#   cd apps/proxy
+#   pnpm dlx wrangler deploy
