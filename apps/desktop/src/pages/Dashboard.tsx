@@ -16,7 +16,7 @@ export const Dashboard: React.FC = () => {
       files: [],
       prompts: [],
       versions: [],
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     });
     navigate(`/project/${id}`);
   };
@@ -24,44 +24,49 @@ export const Dashboard: React.FC = () => {
   const totalTokens = executionLogs.reduce((acc, log) => acc + log.tokens, 0);
 
   const stats = [
-    { label: 'Active Projects', value: projects.length, icon: Layers, color: 'text-indigo-400' },
-    { label: 'Tokens Consumed', value: totalTokens.toLocaleString(), icon: Cpu, color: 'text-cyan-400' },
-    { label: 'Executions', value: executionLogs.length, icon: Activity, color: 'text-emerald-400' },
-    { label: 'Avg Latency', value: '1.2s', icon: Clock, color: 'text-orange-400' },
+    { label: 'Active Projects',  value: projects.length,             icon: Layers,   color: 'text-indigo-400' },
+    { label: 'Tokens Consumed',  value: totalTokens.toLocaleString(), icon: Cpu,      color: 'text-cyan-400' },
+    { label: 'Executions',       value: executionLogs.length,         icon: Activity, color: 'text-emerald-400' },
+    { label: 'Avg Latency',      value: '1.2s',                       icon: Clock,    color: 'text-orange-400' },
   ];
 
   return (
-    <div className="p-12 h-full flex flex-col animate-fade-in overflow-auto">
-      <header className="flex justify-between items-start mb-16">
-        <div>
-          <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.3em] mb-2">Command Center</p>
-          <h1 className="text-6xl font-black tracking-tighter leading-none">
-            FORGE<span className="text-indigo-500">AI</span>
-          </h1>
-          <p className="text-slate-400 mt-4 font-medium">Orquestre inteligência. Construa resultados.</p>
-        </div>
-        <button
-          onClick={handleNewProject}
-          className="bg-white text-black px-10 py-4 rounded-2xl font-black flex items-center gap-3 hover:bg-indigo-500 hover:text-white transition-all shadow-[0_0_30px_rgba(255,255,255,0.1)] active:scale-95"
-        >
-          <Plus size={20} />
-          NEW PROJECT
-        </button>
-      </header>
+    // Pagina ocupa h-full, header+stats fixos, lista de projetos rola
+    <div className="flex flex-col" style={{ height: '100%', overflow: 'hidden' }}>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-        {stats.map((stat, i) => (
-          <div key={i} className="glass rounded-3xl p-6 border border-white/5">
-            <div className="flex items-center gap-3 mb-4">
-              <stat.icon size={16} className={stat.color} />
-              <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">{stat.label}</span>
-            </div>
-            <p className="text-3xl font-black text-white">{stat.value}</p>
+      {/* ===== HEADER + STATS (fixos) ===== */}
+      <div className="px-12 pt-12 pb-8 shrink-0">
+        <div className="flex justify-between items-start mb-12">
+          <div>
+            <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.3em] mb-2">Command Center</p>
+            <h1 className="text-6xl font-black tracking-tighter leading-none">
+              FORGE<span className="text-indigo-500">AI</span>
+            </h1>
+            <p className="text-slate-400 mt-4 font-medium">Orquestre inteligência. Construa resultados.</p>
           </div>
-        ))}
+          <button
+            onClick={handleNewProject}
+            className="bg-white text-black px-10 py-4 rounded-2xl font-black flex items-center gap-3 hover:bg-indigo-500 hover:text-white transition-all shadow-[0_0_30px_rgba(255,255,255,0.1)] active:scale-95"
+          >
+            <Plus size={20} /> NEW PROJECT
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat, i) => (
+            <div key={i} className="glass rounded-3xl p-6 border border-white/5">
+              <div className="flex items-center gap-3 mb-4">
+                <stat.icon size={16} className={stat.color} />
+                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">{stat.label}</span>
+              </div>
+              <p className="text-3xl font-black text-white">{stat.value}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="flex-1">
+      {/* ===== LISTA DE PROJETOS (rola) ===== */}
+      <div className="flex-1 overflow-y-auto px-12 pb-12">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-xl font-black uppercase tracking-tighter">Active Workspaces</h2>
           <div className="flex items-center gap-2 text-slate-500 text-sm">

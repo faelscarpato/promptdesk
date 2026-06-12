@@ -36,9 +36,17 @@ function downloadText(content: string, filename: string) {
 // ---------- CodeCanvas ----------
 const CodeCanvas: React.FC<{ code: string; language: string }> = ({ code, language }) => {
   const [copied, setCopied] = useState(false);
-  const handleCopy = () => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   const handleDownload = () => {
-    const ext: Record<string, string> = { typescript: 'ts', javascript: 'js', python: 'py', rust: 'rs', html: 'html', css: 'css', json: 'json', markdown: 'md', sql: 'sql', bash: 'sh', shell: 'sh' };
+    const ext: Record<string, string> = {
+      typescript: 'ts', javascript: 'js', python: 'py', rust: 'rs',
+      html: 'html', css: 'css', json: 'json', markdown: 'md',
+      sql: 'sql', bash: 'sh', shell: 'sh',
+    };
     downloadText(code, `codigo.${ext[language] ?? language ?? 'txt'}`);
   };
   return (
@@ -68,7 +76,9 @@ const MessageBubble: React.FC<{ msg: ChatMessage; agentName: string }> = ({ msg,
   const [copied, setCopied] = useState(false);
   const isUser = msg.role === 'user';
   const codeBlock = !isUser ? detectCodeBlock(msg.content) : { isCode: false, language: '', code: '' };
-  const textContent = codeBlock.isCode ? msg.content.replace(/```[\w]*?\n[\s\S]*?```/, '').trim() : msg.content;
+  const textContent = codeBlock.isCode
+    ? msg.content.replace(/```[\w]*?\n[\s\S]*?```/, '').trim()
+    : msg.content;
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
@@ -95,24 +105,35 @@ const MessageBubble: React.FC<{ msg: ChatMessage; agentName: string }> = ({ msg,
         {codeBlock.isCode && <CodeCanvas code={codeBlock.code} language={codeBlock.language} />}
         {!isUser && (
           <div className="flex gap-3 mt-3 pt-2 border-t border-slate-700">
-            <button onClick={() => { navigator.clipboard.writeText(msg.content); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors">
+            <button
+              onClick={() => { navigator.clipboard.writeText(msg.content); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+            >
               {copied ? <Check size={11} className="text-green-400" /> : <Copy size={11} />}
               {copied ? 'Copiado' : 'Copiar'}
             </button>
-            <button onClick={() => downloadText(msg.content, `resposta-${agentName.toLowerCase().replace(/\s+/g, '-')}.md`)}
-              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors">
+            <button
+              onClick={() => downloadText(msg.content, `resposta-${agentName.toLowerCase().replace(/\s+/g, '-')}.md`)}
+              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+            >
               <Download size={11} /> Baixar .md
             </button>
           </div>
         )}
-        <p className="text-[10px] mt-1 opacity-40">{msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+        <p className="text-[10px] mt-1 opacity-40">
+          {msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+        </p>
       </div>
     </div>
   );
 };
 
 // ---------- AgentChat ----------
+// ESTRUTURA:
+//   [header fixo]          shrink-0
+//   [mensagens scroll]     flex-1 overflow-y-auto
+//   [arquivos anexados]    shrink-0 (condicional)
+//   [input fixo]           shrink-0
 const AgentChat: React.FC<{ agent: Agent; onBack: () => void }> = ({ agent, onBack }) => {
   const sessionId = useRef(crypto.randomUUID());
   const [messages, setMessages] = useState<ChatMessage[]>([{
@@ -129,12 +150,12 @@ const AgentChat: React.FC<{ agent: Agent; onBack: () => void }> = ({ agent, onBa
   const { settings } = useAppStore();
   const activeProvider = settings.providers[activeProviderIdx];
 
-  // Auto-scroll a cada nova mensagem
+  // Auto-scroll ao receber nova mensagem
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // Salva histórico a cada atualização de mensagens
+  // Salva historico no localStorage
   useEffect(() => {
     if (messages.length <= 1) return;
     const entry: ChatHistoryEntry = {
@@ -155,7 +176,10 @@ const AgentChat: React.FC<{ agent: Agent; onBack: () => void }> = ({ agent, onBa
 
   const handleAttach = async () => {
     try {
-      const selected = await open({ multiple: true, filters: [{ name: 'Suportados', extensions: ['pdf', 'txt', 'md'] }] });
+      const selected = await open({
+        multiple: true,
+        filters: [{ name: 'Suportados', extensions: ['pdf', 'txt', 'md'] }],
+      });
       if (!selected) return;
       const paths = Array.isArray(selected) ? selected : [selected];
       const files = await Promise.all(paths.map(async (p) => {
@@ -169,19 +193,35 @@ const AgentChat: React.FC<{ agent: Agent; onBack: () => void }> = ({ agent, onBa
 
   const handleSend = async () => {
     if (!input.trim() && attachedFiles.length === 0) return;
-    if (!activeProvider) { alert('Configure um provedor de IA nas Configurações primeiro!'); return; }
-
-    const userContent = [input, ...attachedFiles.map(f => `\n\n--- Arquivo: ${f.name} ---\n${f.content}`)].join('');
-    const userMsg: ChatMessage = { role: 'user', content: userContent, files: attachedFiles.map(f => f.name), timestamp: new Date() };
-
+    if (!activeProvider) {
+      alert('Configure um provedor de IA nas Configurações primeiro!');
+      return;
+    }
+    const userContent = [
+      input,
+      ...attachedFiles.map(f => `\n\n--- Arquivo: ${f.name} ---\n${f.content}`),
+    ].join('');
+    const userMsg: ChatMessage = {
+      role: 'user',
+      content: userContent,
+      files: attachedFiles.map(f => f.name),
+      timestamp: new Date(),
+    };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setAttachedFiles([]);
     setLoading(true);
-    if (textareaRef.current) { textareaRef.current.style.height = 'auto'; }
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
 
-    const history = messages.map(m => `${m.role === 'user' ? 'Usuário' : 'Assistente'}: ${m.content}`).join('\n');
-    const fullPrompt = [agent.systemPrompt, '\n\n--- Histórico ---\n' + history, '\n\nUsuário: ' + userContent, '\n\nAssistente:'].join('');
+    const history = messages
+      .map(m => `${m.role === 'user' ? 'Usuário' : 'Assistente'}: ${m.content}`)
+      .join('\n');
+    const fullPrompt = [
+      agent.systemPrompt,
+      '\n\n--- Histórico ---\n' + history,
+      '\n\nUsuário: ' + userContent,
+      '\n\nAssistente:',
+    ].join('');
 
     try {
       const res = await callLLM(activeProvider, fullPrompt, 0.7);
@@ -200,43 +240,56 @@ const AgentChat: React.FC<{ agent: Agent; onBack: () => void }> = ({ agent, onBa
   const categoryColor = CATEGORY_COLORS[agent.category];
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Header fixo */}
-      <div className="flex items-center gap-4 px-6 py-4 border-b border-white/5 bg-black/20 shrink-0">
-        <button onClick={onBack} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
-          <ChevronLeft size={20} /><span className="text-sm">Galeria</span>
+    // h-full + overflow:hidden garante que este componente ocupa exatamente
+    // o espaco disponivel sem vazar para fora
+    <div className="flex flex-col" style={{ height: '100%', overflow: 'hidden' }}>
+
+      {/* ===== HEADER FIXO ===== */}
+      <div className="flex items-center gap-4 px-6 py-4 border-b border-white/5 bg-black/40 backdrop-blur shrink-0">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+        >
+          <ChevronLeft size={20} />
+          <span className="text-sm">Galeria</span>
         </button>
         <div className="w-px h-6 bg-slate-700" />
-        <div className="flex items-center gap-3 flex-1">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-lg">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-lg shrink-0">
             {CATEGORY_ICONS[agent.category]}
           </div>
-          <div>
-            <h2 className="text-white font-bold text-sm">{agent.name}</h2>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${categoryColor}`}>{agent.subcategory}</span>
+          <div className="min-w-0">
+            <h2 className="text-white font-bold text-sm truncate">{agent.name}</h2>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${categoryColor}`}>
+              {agent.subcategory}
+            </span>
           </div>
         </div>
         {settings.providers.length > 1 && (
           <select
             value={activeProviderIdx}
             onChange={(e) => setActiveProviderIdx(Number(e.target.value))}
-            className="bg-slate-800 border border-slate-700 text-xs text-indigo-400 font-bold rounded-lg px-3 py-1.5 focus:ring-0 cursor-pointer"
+            className="bg-slate-800 border border-slate-700 text-xs text-indigo-400 font-bold rounded-lg px-3 py-1.5 focus:ring-0 cursor-pointer shrink-0"
           >
             {settings.providers.map((p, i) => (
-              <option key={p.id} value={i} className="bg-slate-900 text-white">{p.name || `Provider ${i + 1}`}</option>
+              <option key={p.id} value={i} className="bg-slate-900 text-white">
+                {p.name || `Provider ${i + 1}`}
+              </option>
             ))}
           </select>
         )}
         {agent.isImageAgent && (
-          <span className="flex items-center gap-1 text-xs text-pink-400 bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20">
+          <span className="flex items-center gap-1 text-xs text-pink-400 bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20 shrink-0">
             <ImageIcon size={12} /> Geração de Imagem
           </span>
         )}
       </div>
 
-      {/* Área de mensagens com scroll */}
+      {/* ===== AREA DE MENSAGENS (UNICA QUE ROLA) ===== */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        {messages.map((msg, i) => <MessageBubble key={i} msg={msg} agentName={agent.name} />)}
+        {messages.map((msg, i) => (
+          <MessageBubble key={i} msg={msg} agentName={agent.name} />
+        ))}
         {loading && (
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
@@ -249,17 +302,21 @@ const AgentChat: React.FC<{ agent: Agent; onBack: () => void }> = ({ agent, onBa
             </div>
           </div>
         )}
+        {/* Ancora de scroll — sempre visivel ao final */}
         <div ref={bottomRef} />
       </div>
 
-      {/* Preview de arquivos anexados */}
+      {/* ===== ARQUIVOS ANEXADOS (fixo, condicional) ===== */}
       {attachedFiles.length > 0 && (
-        <div className="px-6 py-2 flex flex-wrap gap-2 border-t border-slate-800 shrink-0">
+        <div className="px-6 py-2 flex flex-wrap gap-2 border-t border-slate-800 bg-black/20 shrink-0">
           {attachedFiles.map((f, i) => (
             <div key={i} className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1">
               <FileText size={12} className="text-indigo-400" />
               <span className="text-xs text-slate-300">{f.name}</span>
-              <button onClick={() => setAttachedFiles(prev => prev.filter((_, j) => j !== i))} className="text-slate-500 hover:text-red-400 transition-colors ml-1">
+              <button
+                onClick={() => setAttachedFiles(prev => prev.filter((_, j) => j !== i))}
+                className="text-slate-500 hover:text-red-400 transition-colors ml-1"
+              >
                 <X size={12} />
               </button>
             </div>
@@ -267,11 +324,14 @@ const AgentChat: React.FC<{ agent: Agent; onBack: () => void }> = ({ agent, onBa
         </div>
       )}
 
-      {/* Input FIXO na parte inferior */}
-      <div className="px-6 py-4 border-t border-white/5 bg-black/30 shrink-0">
+      {/* ===== INPUT FIXO NA PARTE INFERIOR ===== */}
+      <div className="px-6 py-4 border-t border-white/5 bg-black/40 backdrop-blur shrink-0">
         <div className="flex items-end gap-3 bg-slate-800/80 border border-slate-700 rounded-2xl px-4 py-3">
-          <button onClick={handleAttach} title="Anexar PDF, TXT ou MD"
-            className="text-slate-500 hover:text-indigo-400 transition-colors shrink-0 mb-1">
+          <button
+            onClick={handleAttach}
+            title="Anexar PDF, TXT ou MD"
+            className="text-slate-500 hover:text-indigo-400 transition-colors shrink-0 mb-1"
+          >
             <Paperclip size={20} />
           </button>
           <textarea
@@ -308,8 +368,10 @@ const AgentCard: React.FC<{ agent: Agent; onClick: () => void }> = ({ agent, onC
   const color = CATEGORY_COLORS[agent.category];
   const icon = CATEGORY_ICONS[agent.category];
   return (
-    <button onClick={onClick}
-      className="group text-left bg-slate-900/60 hover:bg-slate-800/80 border border-white/5 hover:border-indigo-500/30 rounded-2xl p-5 transition-all duration-200 hover:shadow-[0_0_24px_rgba(99,102,241,0.15)] hover:-translate-y-0.5">
+    <button
+      onClick={onClick}
+      className="group text-left bg-slate-900/60 hover:bg-slate-800/80 border border-white/5 hover:border-indigo-500/30 rounded-2xl p-5 transition-all duration-200 hover:shadow-[0_0_24px_rgba(99,102,241,0.15)] hover:-translate-y-0.5"
+    >
       <div className="flex items-start justify-between mb-3">
         <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center text-xl">{icon}</div>
         {agent.isImageAgent && (
@@ -337,47 +399,68 @@ export const AgentGallery: React.FC = () => {
   ];
 
   const filtered = AGENTS.filter(a => {
-    const matchSearch = a.name.toLowerCase().includes(search.toLowerCase()) || a.desc.toLowerCase().includes(search.toLowerCase());
+    const matchSearch =
+      a.name.toLowerCase().includes(search.toLowerCase()) ||
+      a.desc.toLowerCase().includes(search.toLowerCase());
     const matchCat = activeCategory === 'Todos' || a.category === activeCategory;
     return matchSearch && matchCat;
   });
 
+  // Quando um agente esta selecionado, ocupa h-full sem scroll externo
   if (selectedAgent) {
-    return <div className="h-full flex flex-col"><AgentChat agent={selectedAgent} onBack={() => setSelectedAgent(null)} /></div>;
+    return (
+      <div style={{ height: '100%', overflow: 'hidden' }}>
+        <AgentChat agent={selectedAgent} onBack={() => setSelectedAgent(null)} />
+      </div>
+    );
   }
 
+  // Lista de agentes: header e filtros fixos, grid rola
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <div className="px-8 pt-8 pb-4">
+    <div className="flex flex-col" style={{ height: '100%', overflow: 'hidden' }}>
+
+      {/* ===== HEADER DA GALERIA (fixo) ===== */}
+      <div className="px-8 pt-8 pb-4 shrink-0">
         <div className="flex items-center gap-3 mb-1">
           <Bot size={24} className="text-indigo-400" />
           <h1 className="text-2xl font-black text-white">Galeria de Agentes</h1>
-          <span className="bg-indigo-600/20 text-indigo-400 text-xs font-bold px-2 py-1 rounded-full border border-indigo-500/30">{AGENTS.length} agentes</span>
+          <span className="bg-indigo-600/20 text-indigo-400 text-xs font-bold px-2 py-1 rounded-full border border-indigo-500/30">
+            {AGENTS.length} agentes
+          </span>
         </div>
         <p className="text-slate-500 text-sm">Selecione um agente para iniciar um chat especializado</p>
       </div>
 
-      <div className="px-8 pb-4">
+      {/* ===== FILTROS (fixo) ===== */}
+      <div className="px-8 pb-4 shrink-0">
         <div className="relative mb-4">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input type="text" placeholder="Buscar agentes..." value={search}
+          <input
+            type="text"
+            placeholder="Buscar agentes..."
+            value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-800/60 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-indigo-500/50 transition-colors" />
+            className="w-full bg-slate-800/60 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-indigo-500/50 transition-colors"
+          />
         </div>
         <div className="flex gap-2 flex-wrap">
           {categories.map(cat => (
-            <button key={cat} onClick={() => setActiveCategory(cat as AgentCategory | 'Todos')}
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat as AgentCategory | 'Todos')}
               className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
                 activeCategory === cat
                   ? 'bg-indigo-600 border-indigo-500 text-white'
                   : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'
-              }`}>
+              }`}
+            >
               {cat !== 'Todos' && CATEGORY_ICONS[cat as AgentCategory]} {cat}
             </button>
           ))}
         </div>
       </div>
 
+      {/* ===== GRID DE AGENTES (unico que rola) ===== */}
       <div className="flex-1 overflow-y-auto px-8 pb-8">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-slate-500">
@@ -386,7 +469,9 @@ export const AgentGallery: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filtered.map(agent => <AgentCard key={agent.id} agent={agent} onClick={() => setSelectedAgent(agent)} />)}
+            {filtered.map(agent => (
+              <AgentCard key={agent.id} agent={agent} onClick={() => setSelectedAgent(agent)} />
+            ))}
           </div>
         )}
       </div>

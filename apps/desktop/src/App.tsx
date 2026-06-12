@@ -10,12 +10,27 @@ import { Playground } from './pages/Playground';
 import { AgentGallery } from './pages/AgentGallery';
 import { ChatHistory } from './pages/ChatHistory';
 
+// REGRA DE LAYOUT:
+// - .app-shell   => h-screen, overflow:hidden  (tela inteira, NUNCA rola)
+// - .app-sidebar => h-screen, overflow:hidden  (sidebar fixa)
+// - .app-main    => flex-1, h-screen, overflow:hidden  (area de conteudo, nao rola)
+// - cada pagina e responsavel por criar sua propria area de scroll interna
+
 function App() {
   return (
     <Router>
-      <div className="flex min-h-screen bg-black text-white selection:bg-indigo-500/30">
+      <div
+        className="flex bg-black text-white selection:bg-indigo-500/30"
+        style={{ height: '100vh', overflow: 'hidden' }}
+      >
+        {/* Sidebar — nunca rola */}
         <Sidebar />
-        <main className="flex-1 overflow-hidden">
+
+        {/* Area principal — nunca rola no nivel raiz */}
+        <main
+          className="flex-1 flex flex-col"
+          style={{ height: '100vh', overflow: 'hidden' }}
+        >
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/projects" element={<Dashboard />} />
