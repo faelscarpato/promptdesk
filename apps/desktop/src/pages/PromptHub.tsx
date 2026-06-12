@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Sparkles, Code, Megaphone, Scale, BookOpen, ArrowUpRight, Zap, Copy, Download } from 'lucide-react';
+import { Search, Code, Megaphone, Scale, BookOpen, ArrowUpRight, Zap, Copy, Download, Check } from 'lucide-react';
 import { INITIAL_CATEGORIES } from '../store/appStore';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/appStore';
@@ -8,45 +8,19 @@ function downloadText(content: string, filename: string) {
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
+  a.href = url; a.download = filename; a.click();
   URL.revokeObjectURL(url);
 }
 
 const TEMPLATES = [
-  {
-    id: 1,
-    name: 'Architect Clean Code',
-    cat: 'cat-ti',
-    desc: 'Otimização de sistemas distribuídos e padrões SOLID.',
-    icon: Code,
-    prompt: `Você é um arquiteto de software sênior especializado em Clean Code e SOLID.\n\nSua missão:\n1. Analisar o código fornecido\n2. Identificar violações de princípios SOLID\n3. Sugerir refatorações com exemplos concretos\n4. Priorizar melhorias por impacto\n\nSempre justifique cada sugestão com o princípio violado.`,
-  },
-  {
-    id: 2,
-    name: 'SaaS Growth Copy',
-    cat: 'cat-mkt',
-    desc: 'Focado em conversão de landing pages e retenção.',
-    icon: Megaphone,
-    prompt: `Você é um especialista em copywriting para SaaS com foco em conversão.\n\nSua missão:\n1. Criar headlines de alto impacto\n2. Estruturar proposta de valor clara\n3. Desenvolver CTAs irresistíveis\n4. Reduzir objeções com prova social\n\nFoco em clareza, urgência e benefício tangível.`,
-  },
-  {
-    id: 3,
-    name: 'Legal Analysis AI',
-    cat: 'cat-jur',
-    desc: 'Análise profunda de conformidade e riscos contratuais.',
-    icon: Scale,
-    prompt: `Você é um assistente jurídico especializado em análise contratual.\n\nSua missão:\n1. Identificar cláusulas de risco\n2. Verificar conformidade legal\n3. Sugerir redações alternativas\n4. Alertar sobre omissões críticas\n\nIMPORTANTE: Sempre reforce que este é um apoio preliminar e não substitui advogado.`,
-  },
-  {
-    id: 4,
-    name: 'Academic Researcher',
-    cat: 'cat-aca',
-    desc: 'Sintetização de papers e formatação científica.',
-    icon: BookOpen,
-    prompt: `Você é um pesquisador acadêmico especializado em síntese de literatura científica.\n\nSua missão:\n1. Sintetizar papers complexos em linguagem acessível\n2. Identificar metodologias e resultados principais\n3. Comparar diferentes estudos\n4. Formatar citações no padrão ABNT ou APA\n\nSeja preciso, objetivo e cite fontes quando relevante.`,
-  },
+  { id: 1, name: 'Architect Clean Code', cat: 'cat-ti', desc: 'Sistemas distribu\u00eddos e padr\u00f5es SOLID.', icon: Code,
+    prompt: 'Voc\u00ea \u00e9 um arquiteto de software s\u00eanior especializado em Clean Code e SOLID.\n\nSua miss\u00e3o:\n1. Analisar o c\u00f3digo fornecido\n2. Identificar viola\u00e7\u00f5es de princ\u00edpios SOLID\n3. Sugerir refatora\u00e7\u00f5es com exemplos concretos\n4. Priorizar melhorias por impacto\n\nSempre justifique cada sugest\u00e3o com o princ\u00edpio violado.' },
+  { id: 2, name: 'SaaS Growth Copy', cat: 'cat-mkt', desc: 'Convers\u00e3o de landing pages e reten\u00e7\u00e3o.', icon: Megaphone,
+    prompt: 'Voc\u00ea \u00e9 um especialista em copywriting para SaaS com foco em convers\u00e3o.\n\nSua miss\u00e3o:\n1. Criar headlines de alto impacto\n2. Estruturar proposta de valor clara\n3. Desenvolver CTAs irresist\u00edveis\n4. Reduzir obje\u00e7\u00f5es com prova social\n\nFoco em clareza, urg\u00eancia e benef\u00edcio tang\u00edvel.' },
+  { id: 3, name: 'Legal Analysis AI', cat: 'cat-jur', desc: 'Conformidade e riscos contratuais.', icon: Scale,
+    prompt: 'Voc\u00ea \u00e9 um assistente jur\u00eddico especializado em an\u00e1lise contratual.\n\nSua miss\u00e3o:\n1. Identificar cl\u00e1usulas de risco\n2. Verificar conformidade legal\n3. Sugerir reda\u00e7\u00f5es alternativas\n4. Alertar sobre omiss\u00f5es cr\u00edticas\n\nIMPORTANTE: Este \u00e9 um apoio preliminar, n\u00e3o substitui advogado.' },
+  { id: 4, name: 'Academic Researcher', cat: 'cat-aca', desc: 'S\u00edntese de papers e formata\u00e7\u00e3o cient\u00edfica.', icon: BookOpen,
+    prompt: 'Voc\u00ea \u00e9 um pesquisador acad\u00eamico especializado em s\u00edntese de literatura cient\u00edfica.\n\nSua miss\u00e3o:\n1. Sintetizar papers complexos em linguagem acess\u00edvel\n2. Identificar metodologias e resultados\n3. Comparar diferentes estudos\n4. Formatar cita\u00e7\u00f5es ABNT ou APA\n\nSeja preciso e objetivo.' },
 ];
 
 export const PromptHub: React.FC = () => {
@@ -57,73 +31,45 @@ export const PromptHub: React.FC = () => {
   const navigate = useNavigate();
   const { createProject } = useAppStore();
 
-  const filtered = TEMPLATES.filter(t => {
-    const matchCat = selectedCat === 'all' || t.cat === selectedCat;
-    const matchSearch = t.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.desc.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
-  });
+  const filtered = TEMPLATES.filter(t =>
+    (selectedCat === 'all' || t.cat === selectedCat) &&
+    (t.name.toLowerCase().includes(search.toLowerCase()) || t.desc.toLowerCase().includes(search.toLowerCase()))
+  );
 
-  const handleDeploy = (template: typeof TEMPLATES[0]) => {
+  const handleDeploy = (t: typeof TEMPLATES[0]) => {
     const id = crypto.randomUUID();
-    createProject({
-      id,
-      name: template.name,
-      niche: 'Geral',
-      files: [],
-      prompts: [],
-      versions: [],
-      createdAt: new Date().toISOString(),
-    });
+    createProject({ id, name: t.name, niche: 'Geral', files: [], prompts: [], versions: [], createdAt: new Date().toISOString() });
     navigate(`/project/${id}`);
-  };
-
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   if (activePrompt) {
     return (
-      <div className="p-12 h-full flex flex-col animate-fade-in">
-        <div className="flex items-center gap-4 mb-8">
-          <button
-            onClick={() => setActivePrompt(null)}
-            className="p-3 hover:bg-white/5 rounded-2xl transition-colors text-slate-400 hover:text-white"
-          >
-            ← Voltar
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0, flexWrap: 'wrap' }}>
+          <button onClick={() => setActivePrompt(null)} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+            \u2190 Voltar
           </button>
-          <h2 className="text-2xl font-black">{activePrompt.name}</h2>
-        </div>
-        <div className="flex-1 glass rounded-[2rem] p-8 flex flex-col">
-          <div className="flex justify-between items-center mb-6">
-            <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">System Prompt</span>
-            <div className="flex gap-3">
-              <button
-                onClick={() => handleCopy(activePrompt.prompt)}
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white transition-all text-sm font-bold"
-              >
-                <Copy size={14} />
-                {copied ? 'Copiado!' : 'Copiar'}
-              </button>
-              <button
-                onClick={() => downloadText(activePrompt.prompt, `${activePrompt.name.toLowerCase().replace(/\s+/g, '-')}.md`)}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/40 rounded-xl text-indigo-400 hover:text-white transition-all text-sm font-bold"
-              >
-                <Download size={14} />
-                Baixar .md
-              </button>
-              <button
-                onClick={() => handleDeploy(activePrompt)}
-                className="flex items-center gap-2 px-6 py-2 bg-white text-black hover:bg-indigo-500 hover:text-white rounded-xl font-black text-sm transition-all"
-              >
-                <Zap size={14} fill="currentColor" />
-                Deploy
-              </button>
-            </div>
+          <h2 style={{ fontSize: 'clamp(16px, 3vw, 22px)', fontWeight: 900, color: '#fff', flex: 1 }}>{activePrompt.name}</h2>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button onClick={() => { navigator.clipboard.writeText(activePrompt.prompt); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#94a3b8', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
+              {copied ? <Check size={13} style={{ color: '#34d399' }} /> : <Copy size={13} />}
+              {copied ? 'Copiado!' : 'Copiar'}
+            </button>
+            <button onClick={() => downloadText(activePrompt.prompt, `${activePrompt.name.toLowerCase().replace(/\s+/g, '-')}.md`)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 12, color: '#818cf8', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
+              <Download size={13} /> Baixar
+            </button>
+            <button onClick={() => handleDeploy(activePrompt)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#fff', border: 'none', borderRadius: 12, color: '#000', cursor: 'pointer', fontSize: 12, fontWeight: 900 }}>
+              <Zap size={13} /> Deploy
+            </button>
           </div>
-          <pre className="flex-1 overflow-y-auto text-sm text-slate-300 whitespace-pre-wrap font-mono bg-slate-900/50 rounded-xl p-6">
+        </div>
+        {/* Prompt */}
+        <div style={{ flex: 1, overflow: 'hidden', padding: 20 }}>
+          <pre style={{ height: '100%', overflowY: 'auto', fontSize: 13, color: '#cbd5e1', whiteSpace: 'pre-wrap', fontFamily: 'monospace', background: 'rgba(15,23,42,0.8)', borderRadius: 16, padding: 20, margin: 0 }}>
             {activePrompt.prompt}
           </pre>
         </div>
@@ -132,88 +78,74 @@ export const PromptHub: React.FC = () => {
   }
 
   return (
-    <div className="p-12 h-full flex flex-col animate-fade-in overflow-hidden">
-      <header className="flex justify-between items-start mb-16">
-        <div className="max-w-2xl">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="bg-indigo-500/10 text-indigo-400 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-indigo-500/20">Discovery</span>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      {/* Header fixo */}
+      <div style={{ padding: '20px 20px 12px', flexShrink: 0 }} className="md:px-10">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+          <div>
+            <span style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', color: '#6366f1', letterSpacing: '0.15em', background: 'rgba(99,102,241,0.1)', padding: '3px 10px', borderRadius: 99, border: '1px solid rgba(99,102,241,0.2)' }}>Discovery</span>
+            <h1 style={{ fontSize: 'clamp(2rem, 6vw, 3.5rem)', fontWeight: 900, letterSpacing: '-0.05em', lineHeight: 1, color: '#fff', marginTop: 8 }}>
+              PROMPT<span style={{ color: '#6366f1' }}>HUB</span>
+            </h1>
           </div>
-          <h1 className="text-6xl font-black tracking-tighter mb-4 leading-none">
-            PROMPT<span className="text-indigo-500">HUB</span>
-          </h1>
-          <p className="text-slate-400 text-lg font-medium">O maior repositório de inteligência modular para engenheiros de elite.</p>
-        </div>
-        <div className="relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-          <div className="relative flex items-center bg-black rounded-2xl p-1">
-            <Search className="ml-4 text-slate-500" size={20} />
-            <input
-              placeholder="Search intelligence..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="bg-transparent border-none text-white px-4 py-3 w-64 font-bold focus:ring-0"
-            />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '0 12px', flex: '0 1 220px' }}>
+            <Search size={16} style={{ color: '#475569', flexShrink: 0 }} />
+            <input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)}
+              style={{ background: 'transparent', border: 'none', outline: 'none', color: '#fff', padding: '10px 8px', fontSize: 13, fontWeight: 600, width: '100%' }} />
           </div>
         </div>
-      </header>
-
-      <div className="flex gap-4 mb-12 overflow-x-auto no-scrollbar pb-2">
-        <button
-          onClick={() => setSelectedCat('all')}
-          className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all border ${
-            selectedCat === 'all' ? 'bg-white text-black border-white' : 'bg-transparent text-slate-500 border-white/5 hover:border-white/20'
-          }`}
-        >
-          All Access
-        </button>
-        {INITIAL_CATEGORIES.map(cat => (
-          <button
-            key={cat.id}
-            onClick={() => setSelectedCat(cat.id)}
-            className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all border ${
-              selectedCat === cat.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-transparent text-slate-500 border-white/5 hover:border-white/20'
-            }`}
-          >
-            {cat.name}
-          </button>
-        ))}
+        {/* Categorias */}
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }} className="no-scrollbar">
+          {[{ id: 'all', name: 'Todos' }, ...INITIAL_CATEGORIES].map(cat => (
+            <button key={cat.id} onClick={() => setSelectedCat(cat.id)}
+              style={{
+                padding: '7px 16px', borderRadius: 99, fontSize: 11, fontWeight: 900, whiteSpace: 'nowrap',
+                cursor: 'pointer', border: '1px solid',
+                background: selectedCat === cat.id ? (cat.id === 'all' ? '#fff' : '#4f46e5') : 'transparent',
+                color: selectedCat === cat.id ? (cat.id === 'all' ? '#000' : '#fff') : '#64748b',
+                borderColor: selectedCat === cat.id ? (cat.id === 'all' ? '#fff' : '#4f46e5') : 'rgba(255,255,255,0.08)',
+              }}>
+              {cat.name}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-4 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {filtered.map(template => (
-            <div
-              key={template.id}
-              className="glass rounded-[2.5rem] p-10 group hover:scale-[1.02] transition-all duration-500 cursor-pointer relative overflow-hidden"
-              onClick={() => setActivePrompt(template)}
+      {/* Grid rola */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px 24px' }} className="md:px-10">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: 16 }} className="md:grid-cols-2">
+          {filtered.map(t => (
+            <div key={t.id} onClick={() => setActivePrompt(t)}
+              style={{
+                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
+                borderRadius: 24, padding: '24px 20px', cursor: 'pointer',
+                position: 'relative', overflow: 'hidden', transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(99,102,241,0.4)'; (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.01)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)'; }}
             >
-              <div className="absolute top-0 right-0 p-8 text-white/5 group-hover:text-indigo-500/20 transition-colors">
-                <template.icon size={120} />
+              <div style={{ position: 'absolute', top: 0, right: 0, padding: 16, opacity: 0.04 }}>
+                <t.icon size={80} color="#fff" />
               </div>
-              <div className="relative z-10">
-                <div className="flex justify-between items-start mb-8">
-                  <div className="bg-white/5 p-4 rounded-3xl group-hover:bg-indigo-600 transition-colors duration-500">
-                    <template.icon className="text-white" size={32} />
+              <div style={{ position: 'relative' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.06)', padding: 12, borderRadius: 16 }}>
+                    <t.icon size={24} color="#fff" />
                   </div>
-                  <div className="flex items-center gap-2 text-indigo-400 font-black text-[10px] uppercase tracking-tighter">
-                    <Zap size={14} fill="currentColor" />
-                    High Performance
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 900, color: '#818cf8', textTransform: 'uppercase' }}>
+                    <Zap size={11} fill="#818cf8" color="#818cf8" /> Elite
                   </div>
                 </div>
-                <h3 className="text-3xl font-black mb-4 group-hover:translate-x-2 transition-transform duration-500">{template.name}</h3>
-                <p className="text-slate-500 font-medium mb-8 max-w-sm">{template.desc}</p>
-                <div className="flex items-center gap-6">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleDeploy(template); }}
-                    className="bg-white text-black px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all"
-                  >
-                    Deploy Template
+                <h3 style={{ fontSize: 'clamp(16px, 2.5vw, 22px)', fontWeight: 900, color: '#fff', marginBottom: 8 }}>{t.name}</h3>
+                <p style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>{t.desc}</p>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={e => { e.stopPropagation(); handleDeploy(t); }}
+                    style={{ background: '#fff', color: '#000', padding: '8px 18px', borderRadius: 12, fontWeight: 900, fontSize: 12, border: 'none', cursor: 'pointer' }}>
+                    Deploy
                   </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActivePrompt(template); }}
-                    className="text-slate-500 hover:text-white transition-colors"
-                  >
-                    <ArrowUpRight size={24} />
+                  <button onClick={e => { e.stopPropagation(); setActivePrompt(t); }}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#475569' }}>
+                    <ArrowUpRight size={20} />
                   </button>
                 </div>
               </div>

@@ -1,21 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  FolderKanban,
-  Library,
-  PlayCircle,
-  Settings,
-  Zap,
-  Bot,
-  History,
-  ChevronLeft,
-  ChevronRight,
-  Menu,
-  X,
+  LayoutDashboard, FolderKanban, Library, PlayCircle,
+  Settings, Zap, Bot, History, ChevronLeft, ChevronRight, X,
 } from 'lucide-react';
 
-const ALL_ITEMS = [
+export const ALL_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard',    path: '/' },
   { icon: FolderKanban,   label: 'Projetos',      path: '/projects' },
   { icon: Library,        label: 'Prompt Hub',    path: '/hub' },
@@ -25,50 +15,7 @@ const ALL_ITEMS = [
   { icon: Settings,       label: 'Configura\u00e7\u00f5es', path: '/settings' },
 ];
 
-const DOCK_ITEMS = [
-  { icon: LayoutDashboard, label: 'Home',   path: '/' },
-  { icon: Bot,             label: 'Agentes', path: '/agents' },
-  { icon: Settings,        label: 'Config',  path: '/settings' },
-];
-
-// ─── Dockbar mobile ────────────────────────────────────────────────────────────
-export const MobileDock: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around
-                 bg-black/80 backdrop-blur-2xl border-t border-white/10
-                 px-4 pb-safe pt-3"
-      style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
-    >
-      {DOCK_ITEMS.map((item) => {
-        const isActive =
-          location.pathname === item.path ||
-          (item.path !== '/' && location.pathname.startsWith(item.path));
-        return (
-          <button
-            key={item.path}
-            onClick={() => navigate(item.path)}
-            className={`flex flex-col items-center gap-1 px-6 py-1 rounded-xl transition-all ${
-              isActive ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            <item.icon size={22} />
-            <span className={`text-[10px] font-bold ${
-              isActive ? 'text-indigo-400' : 'text-slate-500'
-            }`}>
-              {item.label}
-            </span>
-          </button>
-        );
-      })}
-    </nav>
-  );
-};
-
-// ─── Sidebar desktop (retrátil) ────────────────────────────────────────────────
+// ===== SIDEBAR DESKTOP (retr\u00e1til) =====
 export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -76,48 +23,70 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`
-        hidden md:flex flex-col
-        bg-black/40 backdrop-blur-2xl text-slate-400
-        border-r border-white/5 shrink-0
-        transition-all duration-300 ease-in-out
-        ${ collapsed ? 'w-[72px]' : 'w-64' }
-      `}
-      style={{ height: '100vh', overflow: 'hidden' }}
+      className="hidden md:flex flex-col shrink-0 transition-all duration-300"
+      style={{
+        width: collapsed ? 72 : 256,
+        height: '100vh',
+        overflow: 'hidden',
+        background: 'rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(24px)',
+        borderRight: '1px solid rgba(255,255,255,0.06)',
+        position: 'relative',
+      }}
     >
-      {/* Logo + bot\u00e3o retrair */}
-      <div className={`flex items-center shrink-0 border-b border-white/5
-        ${ collapsed ? 'justify-center py-5 px-0' : 'justify-between px-6 py-5' }`}
-      >
-        {!collapsed && (
-          <div className="flex items-center gap-3">
-            <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-[0_0_20px_rgba(99,102,241,0.4)]">
-              <Zap size={20} fill="currentColor" />
-            </div>
-            <span className="text-xl font-black text-white tracking-tighter uppercase">
-              Forge<span className="text-indigo-500">AI</span>
+      {/* Logo */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: collapsed ? 'center' : 'space-between',
+        padding: collapsed ? '20px 0' : '20px 20px',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            background: '#4f46e5', padding: 8, borderRadius: 12,
+            boxShadow: '0 0 20px rgba(99,102,241,0.4)',
+          }}>
+            <Zap size={18} color="#fff" fill="#fff" />
+          </div>
+          {!collapsed && (
+            <span style={{ fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: '-0.04em', textTransform: 'uppercase' }}>
+              Forge<span style={{ color: '#6366f1' }}>AI</span>
             </span>
-          </div>
-        )}
+          )}
+        </div>
 
-        {collapsed && (
-          <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-[0_0_20px_rgba(99,102,241,0.4)]">
-            <Zap size={20} fill="currentColor" />
-          </div>
+        {!collapsed && (
+          <button
+            onClick={() => setCollapsed(true)}
+            title="Retrair"
+            style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: 6, borderRadius: 8 }}
+          >
+            <ChevronLeft size={16} />
+          </button>
         )}
-
-        <button
-          onClick={() => setCollapsed(v => !v)}
-          className={`p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/5 transition-all
-            ${ collapsed ? 'absolute right-[-14px] bg-slate-900 border border-white/10 z-10 rounded-full' : '' }`}
-          title={ collapsed ? 'Expandir sidebar' : 'Retrair sidebar' }
-        >
-          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button>
       </div>
 
+      {/* Bot\u00e3o expandir (s\u00f3 quando retra\u00eddo) */}
+      {collapsed && (
+        <button
+          onClick={() => setCollapsed(false)}
+          title="Expandir"
+          style={{
+            position: 'absolute', top: 18, right: -12, zIndex: 10,
+            background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)',
+            color: '#94a3b8', cursor: 'pointer',
+            width: 24, height: 24, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <ChevronRight size={13} />
+        </button>
+      )}
+
       {/* Nav */}
-      <nav className="flex-1 px-2 space-y-1 mt-4 overflow-hidden">
+      <nav style={{ flex: 1, padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 4, overflow: 'hidden' }}>
         {ALL_ITEMS.map((item) => {
           const isActive =
             location.pathname === item.path ||
@@ -126,30 +95,41 @@ export const Sidebar: React.FC = () => {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              title={ collapsed ? item.label : undefined }
-              className={`
-                w-full flex items-center rounded-xl font-bold transition-all
-                ${ collapsed ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-3' }
-                ${ isActive
-                    ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20'
-                    : 'hover:bg-slate-800 hover:text-slate-200 border border-transparent' }
-              `}
+              title={collapsed ? item.label : undefined}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                gap: collapsed ? 0 : 12,
+                padding: collapsed ? '12px 0' : '10px 14px',
+                borderRadius: 12,
+                border: isActive ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent',
+                background: isActive ? 'rgba(99,102,241,0.1)' : 'transparent',
+                color: isActive ? '#818cf8' : '#64748b',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: 14,
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'; }}
+              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
             >
-              <item.icon size={20} className="shrink-0" />
+              <item.icon size={20} style={{ flexShrink: 0 }} />
               {!collapsed && <span>{item.label}</span>}
             </button>
           );
         })}
       </nav>
 
-      {/* Footer — s\u00f3 aparece expandido */}
+      {/* Footer */}
       {!collapsed && (
-        <div className="p-4 border-t border-slate-800 shrink-0">
-          <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
-            <p className="text-[10px] font-black uppercase text-slate-500 mb-2">Plano Atual</p>
-            <p className="text-sm font-bold text-white">Enterprise v1.2</p>
-            <div className="w-full bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
-              <div className="bg-indigo-600 h-full w-3/4" />
+        <div style={{ padding: 16, borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+          <div style={{ background: 'rgba(30,41,59,0.6)', borderRadius: 16, padding: 16, border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', color: '#475569', letterSpacing: '0.1em', marginBottom: 6 }}>Plano Atual</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>Enterprise v1.2</p>
+            <div style={{ width: '100%', background: '#334155', height: 4, borderRadius: 99, marginTop: 10, overflow: 'hidden' }}>
+              <div style={{ width: '75%', background: '#4f46e5', height: '100%' }} />
             </div>
           </div>
         </div>
@@ -158,7 +138,7 @@ export const Sidebar: React.FC = () => {
   );
 };
 
-// ─── Drawer mobile (menu completo) ─────────────────────────────────────────────
+// ===== DRAWER MOBILE (menu completo com todos os itens) =====
 export const MobileDrawer: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -168,31 +148,53 @@ export const MobileDrawer: React.FC<{ open: boolean; onClose: () => void }> = ({
       {/* Overlay */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300
-          ${ open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' }`}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(4px)',
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? 'auto' : 'none',
+          transition: 'opacity 0.25s',
+        }}
       />
 
-      {/* Drawer */}
+      {/* Painel */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-72 bg-slate-950 border-r border-white/10
-          flex flex-col transition-transform duration-300 ease-in-out
-          ${ open ? 'translate-x-0' : '-translate-x-full' }`}
+        style={{
+          position: 'fixed', top: 0, left: 0, zIndex: 1001,
+          height: '100%', width: 280,
+          background: '#0a0a0f',
+          borderRight: '1px solid rgba(255,255,255,0.08)',
+          display: 'flex', flexDirection: 'column',
+          transform: open ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
+        }}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
-          <div className="flex items-center gap-3">
-            <div className="bg-indigo-600 p-2 rounded-xl text-white">
-              <Zap size={20} fill="currentColor" />
+        {/* Header do drawer */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '20px 20px',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ background: '#4f46e5', padding: 8, borderRadius: 12 }}>
+              <Zap size={18} color="#fff" fill="#fff" />
             </div>
-            <span className="text-xl font-black text-white tracking-tighter uppercase">
-              Forge<span className="text-indigo-500">AI</span>
+            <span style={{ fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: '-0.04em', textTransform: 'uppercase' }}>
+              Forge<span style={{ color: '#6366f1' }}>AI</span>
             </span>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 8 }}
+          >
             <X size={20} />
           </button>
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: '12px 12px', display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto' }}>
           {ALL_ITEMS.map((item) => {
             const isActive =
               location.pathname === item.path ||
@@ -201,24 +203,32 @@ export const MobileDrawer: React.FC<{ open: boolean; onClose: () => void }> = ({
               <button
                 key={item.path}
                 onClick={() => { navigate(item.path); onClose(); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all
-                  ${ isActive
-                      ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20'
-                      : 'hover:bg-slate-800 hover:text-slate-200 border border-transparent' }`}
+                style={{
+                  width: '100%',
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  padding: '13px 16px',
+                  borderRadius: 14,
+                  border: isActive ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent',
+                  background: isActive ? 'rgba(99,102,241,0.12)' : 'transparent',
+                  color: isActive ? '#818cf8' : '#94a3b8',
+                  cursor: 'pointer', fontWeight: 700, fontSize: 15,
+                  textAlign: 'left',
+                }}
               >
-                <item.icon size={20} />
+                <item.icon size={22} style={{ flexShrink: 0 }} />
                 <span>{item.label}</span>
               </button>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-800">
-          <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
-            <p className="text-[10px] font-black uppercase text-slate-500 mb-2">Plano Atual</p>
-            <p className="text-sm font-bold text-white">Enterprise v1.2</p>
-            <div className="w-full bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
-              <div className="bg-indigo-600 h-full w-3/4" />
+        {/* Footer */}
+        <div style={{ padding: 16, borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+          <div style={{ background: 'rgba(30,41,59,0.6)', borderRadius: 16, padding: 16, border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', color: '#475569', letterSpacing: '0.1em', marginBottom: 6 }}>Plano Atual</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>Enterprise v1.2</p>
+            <div style={{ width: '100%', background: '#334155', height: 4, borderRadius: 99, marginTop: 10, overflow: 'hidden' }}>
+              <div style={{ width: '75%', background: '#4f46e5', height: '100%' }} />
             </div>
           </div>
         </div>
