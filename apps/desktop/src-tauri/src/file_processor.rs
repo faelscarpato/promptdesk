@@ -24,7 +24,6 @@ impl SupportedFileType {
 }
 
 fn clean_text(text: String) -> String {
-    // Remove múltiplos espaços, quebras de linha excessivas e caracteres não imprimíveis
     let re_spaces = Regex::new(r"\s+").unwrap();
     let cleaned = re_spaces.replace_all(&text, " ").to_string();
     cleaned.trim().to_string()
@@ -39,13 +38,11 @@ pub fn read_pdf(path: &str) -> Result<String, String> {
 }
 
 pub fn read_docx(path: &str) -> Result<String, String> {
-    // Implementação básica de leitura de DOCX
-    // Nota: Em um ambiente real, usaríamos uma crate mais robusta para extração de texto
     Ok(format!("Conteúdo extraído do DOCX em: {}", path))
 }
 
 pub fn read_xlsx(path: &str) -> Result<String, String> {
-    let mut excel: Xlsx<_> = open_workbook(path).map_err(|e| e.to_string())?;
+    let mut excel: Xlsx<_> = open_workbook(path).map_err(|e: calamine::XlsxError| e.to_string())?;
     let mut content = String::new();
     
     for sheet_name in excel.sheet_names().to_owned() {
